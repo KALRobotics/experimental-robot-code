@@ -75,6 +75,9 @@ public class RobotContainer {
     // CHANGED: Re-enabled AutoBuilder.buildAutoChooser() — now using PPLTVController for tank drive
     autoChooser = AutoBuilder.buildAutoChooser();
 
+    // Set the default auto (match CA26 — avoids unexpected behavior when nothing is selected)
+    autoChooser.setDefaultOption("Do Nothing", Commands.none());
+
     // Add manual options alongside PathPlanner autos
     autoChooser.addOption("Drive Forward", drivebase.driveForward().withTimeout(10));
 
