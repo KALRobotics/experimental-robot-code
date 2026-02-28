@@ -1,6 +1,7 @@
 package frc.robot.subsystems;
 
 import java.util.Optional;
+import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 
 import org.photonvision.EstimatedRobotPose;
@@ -36,6 +37,8 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
@@ -44,8 +47,8 @@ import frc.robot.Constants;
  * Tank drive subsystem with DifferentialDrivePoseEstimator (vision-fused odometry)
  * and PathPlanner AutoBuilder integration via PPLTVController.
  *
- * Left side: motors 6 (FL drive), 8 (BL drive)
- * Right side: motors 10 (FR drive), 12 (BR drive)
+ * Left side: motors 1 (FL drive), 2 (BL drive)
+ * Right side: motors 3 (FR drive), 4 (BR drive)
  */
 public class TankDriveSubsystem extends SubsystemBase {
   private final SparkMax leftLeader = new SparkMax(Constants.DriveConstants.FL.kDriveMotorId, MotorType.kBrushless);
@@ -69,7 +72,13 @@ public class TankDriveSubsystem extends SubsystemBase {
   private final PIDController leftPID;
   private final PIDController rightPID;
 
+  //MAP
+  private final Field2d m_field = new Field2d();
+
   public TankDriveSubsystem() {
+
+    SmartDashboard.putData("Field", m_field);
+
     // Encoder conversion: rotations → meters, RPM → m/s
     double wheelDiameterMeters = Units.inchesToMeters(Constants.TankDriveConstants.WHEEL_DIAMETER_INCHES);
     double gearRatio = Constants.TankDriveConstants.GEAR_RATIO;
@@ -78,7 +87,9 @@ public class TankDriveSubsystem extends SubsystemBase {
 
     // REVLib 2026: configure all SparkMax settings via SparkMaxConfig objects
     SparkMaxConfig leftLeaderConfig = new SparkMaxConfig();
-    leftLeaderConfig.idleMode(IdleMode.kBrake);
+    leftLeaderConfig
+        .idleMode(IdleMode.kBrake)
+        .smartCurrentLimit(40);
     leftLeaderConfig.encoder
         .positionConversionFactor(encoderPositionFactor)
         .velocityConversionFactor(encoderVelocityFactor);
@@ -86,20 +97,22 @@ public class TankDriveSubsystem extends SubsystemBase {
     SparkMaxConfig leftFollowerConfig = new SparkMaxConfig();
     leftFollowerConfig
         .idleMode(IdleMode.kBrake)
+        .smartCurrentLimit(40)
         .follow(leftLeader);
 
     SparkMaxConfig rightLeaderConfig = new SparkMaxConfig();
     rightLeaderConfig
         .inverted(true)
-        .idleMode(IdleMode.kBrake);
+        .idleMode(IdleMode.kBrake)
+        .smartCurrentLimit(40);
     rightLeaderConfig.encoder
         .positionConversionFactor(encoderPositionFactor)
         .velocityConversionFactor(encoderVelocityFactor);
 
     SparkMaxConfig rightFollowerConfig = new SparkMaxConfig();
     rightFollowerConfig
-        .inverted(true)
         .idleMode(IdleMode.kBrake)
+        .smartCurrentLimit(40)
         .follow(rightLeader);
 
     leftLeader.configure(leftLeaderConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
@@ -143,7 +156,7 @@ public class TankDriveSubsystem extends SubsystemBase {
     // PhotonVision 2026: 2-arg constructor (fieldLayout, robotToCamera transform)
     if (IS_PHOTONVISION_ENABLED) {
       try {
-        photonCamera = new PhotonCamera("photonvision");
+        photonCamera = new PhotonCamera("pi kamera");
         var robotToCamera = new Transform3d(
             new Translation3d(
                 Units.inchesToMeters(-11.0),
@@ -225,6 +238,8 @@ public class TankDriveSubsystem extends SubsystemBase {
     Logger.recordOutput("TankDrive/LeftVelocity", leftLeader.getEncoder().getVelocity());
     Logger.recordOutput("TankDrive/RightVelocity", rightLeader.getEncoder().getVelocity());
     Logger.recordOutput("TankDrive/GyroAngle", gyro.getAngle());
+
+    m_field.setRobotPose(poseEstimator.getEstimatedPosition());
   }
 
   @Override
@@ -258,6 +273,11 @@ public class TankDriveSubsystem extends SubsystemBase {
 
   public Command arcadeDriveCommand(DoubleSupplier forward, DoubleSupplier rotation) {
     return run(() -> differentialDrive.arcadeDrive(forward.getAsDouble(), rotation.getAsDouble()))
+        .finallyDo(() -> differentialDrive.stopMotor());
+  }
+
+  public Command curvatureDriveCommand(DoubleSupplier throttle, DoubleSupplier turn, BooleanSupplier quickTurn) {
+    return run(() -> differentialDrive.curvatureDrive(throttle.getAsDouble(), turn.getAsDouble(), quickTurn.getAsBoolean()))
         .finallyDo(() -> differentialDrive.stopMotor());
   }
 

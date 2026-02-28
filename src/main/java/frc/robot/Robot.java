@@ -7,6 +7,9 @@ import org.littletonrobotics.junction.networktables.NT4Publisher;
 
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.kinematics.Odometry;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.util.CommandsLogging;
@@ -15,11 +18,15 @@ import frc.robot.util.maplesim.Arena2026Rebuilt;
 public class Robot extends LoggedRobot {
   private Command m_autonomousCommand;
 
+
+
   private final RobotContainer m_robotContainer;
   private SimulatedArena arena;
 
   public Robot() {
     Logger.recordMetadata("ProjectName", "CA_Ri3D_2026"); // Set a metadata value
+
+
 
     Logger.addDataReceiver(new NT4Publisher()); // Publish data to NetworkTables
 
@@ -56,6 +63,7 @@ public class Robot extends LoggedRobot {
       Logger.recordOutput("FieldSimulation/FuelPoses", fuelPoses);
     }
 
+
     Logger.recordOutput("FieldSimulation/RobotPose", m_robotContainer.getRobotPose());
     Logger.recordOutput("FieldSimulation/AimDirection", m_robotContainer.getAimDirection());
     Logger.recordOutput("FieldSimulation/AimTarget", new Pose3d(m_robotContainer.getAimPoint(), Rotation3d.kZero));
@@ -67,6 +75,7 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void disabledPeriodic() {
+
   }
 
   @Override

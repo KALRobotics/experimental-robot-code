@@ -65,7 +65,8 @@ public class HoodSubsystem extends SubsystemBase {
   }
 
   public Angle getAngle() {
-    return Degrees.of(75);
+    // Hood hardware disabled — return 0 to match default target so isReadyToShoot isn't blocked
+    return Degrees.of(0);
     // return hood.getAngle();
   }
 

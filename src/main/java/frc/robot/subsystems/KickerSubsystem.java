@@ -24,8 +24,7 @@ import yams.motorcontrollers.local.SparkWrapper;
 
 public class KickerSubsystem extends SubsystemBase {
 
-  // Reduced from 1.0 for safe initial testing with NEO — scale up after verifying
-  private static final double KICKER_SPEED = 0.8;
+  private static final double KICKER_SPEED = 1.0;
 
   private SparkMax kickerSpark = new SparkMax(Constants.KickerConstants.kKickerMotorId, MotorType.kBrushless);
 
@@ -35,7 +34,7 @@ public class KickerSubsystem extends SubsystemBase {
       .withGearing(new MechanismGearing(GearBox.fromReductionStages(4)))
       .withMotorInverted(true)
       .withIdleMode(MotorMode.BRAKE)
-      .withStatorCurrentLimit(Amps.of(20));
+      .withStatorCurrentLimit(Amps.of(30));
 
   private SmartMotorController smc = new SparkWrapper(kickerSpark, DCMotor.getNEO(1), smcConfig);
 

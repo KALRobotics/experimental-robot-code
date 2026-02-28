@@ -18,9 +18,9 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.ControllerConstants;
+import frc.robot.commands.ShootOnTheMoveCommand;
 import frc.robot.controls.DriverControls;
 import frc.robot.controls.OperatorControls;
-import frc.robot.controls.PoseControls;
 import frc.robot.subsystems.HoodSubsystem;
 import frc.robot.subsystems.HopperSubsystem;
 import frc.robot.subsystems.IntakeSubsystem;
@@ -68,7 +68,7 @@ public class RobotContainer {
     new Trigger(() -> isOnAllianceOutpostSide())
         .onChange(Commands.runOnce(() -> onZoneChanged()).ignoringDisable(true));
 
-    if (!Robot.isReal() || true) {
+    if (!Robot.isReal()) {
       DriverStation.silenceJoystickConnectionWarning(true);
     }
 
@@ -86,20 +86,33 @@ public class RobotContainer {
     // Set up controllers
     DriverControls.configure(ControllerConstants.kDriverControllerPort, drivebase, superstructure);
     OperatorControls.configure(ControllerConstants.kOperatorControllerPort, drivebase, superstructure);
-    PoseControls.configure(ControllerConstants.kPoseControllerPort, drivebase);
   }
 
   private void buildNamedAutoCommands() {
-    // Add any auto commands to the NamedCommands here
-    NamedCommands.registerCommand("ScoreCoral",
-        Commands.runOnce(() -> System.out.println("Scoring Coral!"), drivebase)
-            .andThen(Commands.waitSeconds(1))
-            .withName("Auto.ScoreCoral"));
+    // Auto-aim at the alliance hub, spin up the shooter to the correct RPM based
+    // on distance, wait until turret + shooter are on target, then feed all
+    // preloaded balls through the hopper and kicker.
+    // Timeline: ~1.5s spinup -> up to 2s to converge -> up to 4s feeding
+    NamedCommands.registerCommand("AutoShoot",
+        Commands.deadline(
+            Commands.sequence(
+                Commands.waitSeconds(1.5),
+                superstructure.waitUntilReadyCommand().withTimeout(2.0),
+                superstructure.feedAllCommand().withTimeout(4.0)),
+            new ShootOnTheMoveCommand(drivebase, superstructure, () -> superstructure.getAimPoint()))
+            .andThen(superstructure.stopFeedingAllCommand())
+            .andThen(superstructure.stopAllCommand())
+            .withName("Auto.AutoShoot"));
 
-    NamedCommands.registerCommand("Dealgae",
-        Commands.runOnce(() -> System.out.println("Dealgae!"), drivebase)
-            .andThen(Commands.waitSeconds(1))
-            .withName("Auto.Dealgae"));
+    // Deploy the intake arm, run intake rollers and hopper to collect fuel from
+    // the ground. The intake retracts and motors stop automatically when the
+    // command ends (finallyDo cleanup in each subsystem).
+    NamedCommands.registerCommand("IntakeFuel",
+        Commands.parallel(
+            intake.deployAndRollCommand().asProxy(),
+            hopper.feedCommand().asProxy())
+            .withTimeout(4.0)
+            .withName("Auto.IntakeFuel"));
 
     NamedCommands.registerCommand("driveBackwards",
         drivebase.driveBackwards().withTimeout(1)
@@ -123,7 +136,7 @@ public class RobotContainer {
   }
 
   public Pose3d getAimDirection() {
-    // Apply robot heading first, then turret/hood rotation on top
+    // Apply robot heading first, then turret rotation on top
     Pose3d shooterPose = superstructure.getShooterPose();
 
     var pose = drivebase.getPose3d().plus(new Transform3d(

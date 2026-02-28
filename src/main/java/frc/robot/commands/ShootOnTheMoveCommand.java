@@ -10,7 +10,6 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
-import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.RPM;
 import edu.wpi.first.units.measure.Angle;
@@ -26,7 +25,6 @@ public class ShootOnTheMoveCommand extends Command {
 
   private Supplier<Translation3d> aimPointSupplier;
   private AngularVelocity latestShootSpeed;
-  private Angle latestHoodAngle;
   private Angle latestTurretAngle;
   private Command aimDynamicCmd;
 
@@ -50,14 +48,12 @@ public class ShootOnTheMoveCommand extends Command {
   public void initialize() {
     super.initialize();
 
-    latestHoodAngle = superstructure.getHoodAngle();
     latestTurretAngle = superstructure.getTurretAngle();
     latestShootSpeed = superstructure.getShooterSpeed();
 
     aimDynamicCmd = superstructure.aimDynamicCommand(
         () -> this.latestShootSpeed,
-        () -> this.latestTurretAngle,
-        () -> this.latestHoodAngle);
+        () -> this.latestTurretAngle);
     aimDynamicCmd.schedule();
   }
 
@@ -121,20 +117,9 @@ public class ShootOnTheMoveCommand extends Command {
     latestTurretAngle = calculatedHeading;
     latestShootSpeed = calculateRequiredShooterSpeed(correctedDistance);
 
-    // TODO: add this back if/when we have a real hood, for now, just set it to the
-    // current angle
-    // latestHoodAngle = calculateRequiredHoodAngle(correctedDistance);
-    latestHoodAngle = superstructure.getHoodAngle();
-
     superstructure.setShooterSetpoints(
         latestShootSpeed,
-        latestTurretAngle,
-        latestHoodAngle);
-
-    // System.out.println("Shooting at distance: " + correctedDistance + " requires
-    // speed: " + latestShootSpeed
-    // + ", hood angle: " + latestHoodAngle + ", turret angle: " +
-    // latestTurretAngle);
+        latestTurretAngle);
   }
 
   private double getFlightTime(Distance distanceToTarget) {
@@ -146,10 +131,6 @@ public class ShootOnTheMoveCommand extends Command {
     return RPM.of(SHOOTING_SPEED_BY_DISTANCE.get(distanceToTarget.in(Meters)));
   }
 
-  private Angle calculateRequiredHoodAngle(Distance distanceToTarget) {
-    return Degrees.of(HOOD_ANGLE_BY_DISTANCE.get(distanceToTarget.in(Meters)));
-  }
-
   // meters, seconds
   private static final InterpolatingDoubleTreeMap TIME_OF_FLIGHT_BY_DISTANCE = InterpolatingDoubleTreeMap.ofEntries(
       Map.entry(1.0, 1.0),
@@ -159,16 +140,11 @@ public class ShootOnTheMoveCommand extends Command {
   // MID: maybe good enough
   // FAR: NEED
 
-  // meters, RPS
+  // meters, RPM
   private static final InterpolatingDoubleTreeMap SHOOTING_SPEED_BY_DISTANCE = InterpolatingDoubleTreeMap.ofEntries(
       Map.entry(2.0, 2700.0),
       Map.entry(3.0, 3000.0),
       Map.entry(4.0, 3300.0),
       Map.entry(4.86, 3750.0));
 
-  // meters, degrees
-  private static final InterpolatingDoubleTreeMap HOOD_ANGLE_BY_DISTANCE = InterpolatingDoubleTreeMap.ofEntries(
-      Map.entry(1.0, 15.0),
-      Map.entry(2.0, 30.0),
-      Map.entry(3.0, 45.0));
 }

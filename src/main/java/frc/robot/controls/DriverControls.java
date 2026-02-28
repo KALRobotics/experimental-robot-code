@@ -8,6 +8,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Meter;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -35,24 +36,25 @@ public class DriverControls {
   public static void configure(int port, TankDriveSubsystem drivetrain, Superstructure superstructure) {
     CommandXboxController controller = new CommandXboxController(port);
 
-    // Arcade drive: left stick Y = forward/back, right stick X = rotation
-    // Apply deadband and scaling
+    // Curvature drive: left stick Y = throttle, right stick X = turn rate
+    // Quick-turn (turn in place) activates when throttle is near zero
     drivetrain.setDefaultCommand(
-        drivetrain.arcadeDriveCommand(
+        drivetrain.curvatureDriveCommand(
             () -> {
               double input = -controller.getLeftY();
               if (Math.abs(input) < ControllerConstants.DEADBAND) {
                 return 0.0;
               }
-              return input * 0.5; // Scale down for safety
+              return input * 0.5;
             },
             () -> {
               double input = -controller.getRightX();
               if (Math.abs(input) < ControllerConstants.DEADBAND) {
                 return 0.0;
               }
-              return input * 0.5; // Scale down for safety
-            })
+              return input * 0.5;
+            },
+            () -> Math.abs(controller.getLeftY()) < ControllerConstants.DEADBAND)
             .withName("Drive"));
 
     if (DriverStation.isTest()) {
@@ -91,9 +93,8 @@ public class DriverControls {
           drivetrain.getPose().getRotation().rotateBy(superstructure.getAimRotation3d().toRotation2d()),
           superstructure.turret.turretTranslation.getMeasureZ(),
 
-          // 0.5 times because we're applying spin to the fuel as we shoot it
           superstructure.getTangentialVelocity().times(0.5),
-          superstructure.getHoodAngle());
+          Degrees.of(60));
 
       // Configure callbacks to visualize the flight trajectory of the projectile
       fuel.withProjectileTrajectoryDisplayCallBack(
