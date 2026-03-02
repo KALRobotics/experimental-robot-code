@@ -77,6 +77,11 @@ public class TurretSubsystem extends SubsystemBase {
   public TurretSubsystem() {
   }
 
+  public Command addAngle(Angle angleAdd) {
+    return turret.setAngle(turret.angle + angleAdd);
+  }
+
+  
   public Command setAngle(Angle angle) {
     return turret.setAngle(angle);
   }

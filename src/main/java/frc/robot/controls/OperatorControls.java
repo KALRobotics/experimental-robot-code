@@ -4,6 +4,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.commands.ShootOnTheMoveCommand;
 import frc.robot.subsystems.Superstructure;
 import frc.robot.subsystems.TankDriveSubsystem;
+import frc.robot.subsystems.TurretSubsystem;
 
 public class OperatorControls {
   public static final boolean MACOS_WEIRD_CONTROLLER = true;
@@ -51,9 +52,9 @@ public class OperatorControls {
     // REAL CONTROLS
     controller.start().onTrue(superstructure.rezeroIntakePivotAndTurretCommand().ignoringDisable(true));
 
-    controller.rightTrigger().whileTrue(
-        superstructure.feedAllCommand()
-            .finallyDo(() -> superstructure.stopFeedingAllCommand().schedule()));
+    controller.rightTrigger().whileTrue(superstructure.turret.addAngle(1));
+
+    controller.leftTrigger().whileTrue(superstructure.turret.addAngle(-1));
 
     controller.leftBumper()
         .whileTrue(superstructure.setIntakeDeployAndRoll().withName("OperatorControls.intakeDeployed"));
