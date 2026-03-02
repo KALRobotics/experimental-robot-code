@@ -99,8 +99,8 @@ public final class Constants {
   }
 
   public static class ShooterConstants {
-    public static final int kLeaderMotorId = 5;
-    public static final int kFollowerMotorId = 6;
+    public static final int kLeaderMotorId = 6;
+    public static final int kFollowerMotorId = 5;
   }
 
   public static class TurretConstants {

@@ -73,6 +73,7 @@ public class OperatorControls {
 
     controller.leftBumper()
         .whileTrue(superstructure.setIntakeDeployAndRoll().withName("OperatorControls.intakeDeployed"));
+    controller.leftBumper().onFalse(superstructure.retractIntakeUpCommand());
 
     controller.y().onTrue(superstructure.shootCommand());
     controller.x().whileTrue(superstructure.stopShootingCommand());

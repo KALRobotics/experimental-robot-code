@@ -15,6 +15,7 @@ import static edu.wpi.first.units.Units.Pounds;
 import static edu.wpi.first.units.Units.RPM;
 import static edu.wpi.first.units.Units.Seconds;
 import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -36,6 +37,11 @@ public class IntakeSubsystem extends SubsystemBase {
 
   // Reduced from 1.0 for safe initial testing with NEO — scale up after verifying
   private static final double INTAKE_SPEED = 0.6;
+
+  /** Pivot runs down for this long when button held; physical stop limits travel at bottom. */
+  private static final double DEPLOY_DOWN_SECONDS = 5.0;
+  /** Pivot runs up (to 0°) for this long when button released; physical stop at top. */
+  private static final double RETRACT_UP_SECONDS = 5.0;
 
   private SparkMax rollerSpark = new SparkMax(Constants.IntakeConstants.kRollerMotorId, MotorType.kBrushless);
 
@@ -113,27 +119,49 @@ public class IntakeSubsystem extends SubsystemBase {
   }
 
   /**
-   * Command to deploy intake and run roller while held.
-   * Stops roller when released.
+   * While held: pivot goes down for 5s (then holds at physical stop), roller runs.
+   * When you release, binding runs retractUpCommand() so pivot always goes up for 5s.
    */
   public Command deployAndRollCommand() {
+    final double[] startTime = { Double.NaN };
     return Commands.run(() -> {
-      setIntakeDeployed();
+      if (Double.isNaN(startTime[0])) {
+        startTime[0] = Timer.getFPGATimestamp();
+      }
+      double elapsed = Timer.getFPGATimestamp() - startTime[0];
+      if (elapsed < DEPLOY_DOWN_SECONDS) {
+        setIntakeDeployed();
+      } else {
+        holdCurrentPivotPosition();
+      }
       smc.setDutyCycle(INTAKE_SPEED);
-    }, this).finallyDo(() -> {
-      smc.setDutyCycle(0);
-      setIntakeHold();
-    }).withName("Intake.DeployAndRoll");
+    }, this).finallyDo(() -> smc.setDutyCycle(0)).withName("Intake.DeployAndRoll");
+  }
+
+  /**
+   * Pivot goes up (to 0°) for 5s then holds. Schedule this when bumper is released.
+   */
+  public Command retractUpCommand() {
+    return Commands.run(this::setIntakeStow, this)
+        .withTimeout(RETRACT_UP_SECONDS)
+        .finallyDo(this::holdCurrentPivotPosition)
+        .withName("Intake.RetractUp");
   }
 
   public Command backFeedAndRollCommand() {
+    final double[] startTime = { Double.NaN };
     return Commands.run(() -> {
-      setIntakeDeployed();
+      if (Double.isNaN(startTime[0])) {
+        startTime[0] = Timer.getFPGATimestamp();
+      }
+      double elapsed = Timer.getFPGATimestamp() - startTime[0];
+      if (elapsed < DEPLOY_DOWN_SECONDS) {
+        setIntakeDeployed();
+      } else {
+        holdCurrentPivotPosition();
+      }
       smc.setDutyCycle(-INTAKE_SPEED);
-    }, this).finallyDo(() -> {
-      smc.setDutyCycle(0);
-      setIntakeHold();
-    }).withName("Intake.BackFeedAndRoll");
+    }, this).finallyDo(() -> smc.setDutyCycle(0)).withName("Intake.BackFeedAndRoll");
   }
 
   private void setIntakeStow() {
@@ -142,6 +170,22 @@ public class IntakeSubsystem extends SubsystemBase {
 
   private void setIntakeFeed() {
     intakePivotController.setPosition(Degrees.of(59));
+  }
+
+  /**
+   * Hold pivot at its current angle (use when releasing deploy so the arm doesn't
+   * try to move toward 115° which may be further down if it never reached 148°).
+   */
+  private void holdCurrentPivotPosition() {
+    intakePivotController.setPosition(intakePivot.getAngle());
+  }
+
+  /**
+   * Retract pivot to hold angle (115°). Use when you want a fixed "hold" position;
+   * deploy release now holds current position instead so the arm doesn't drive down.
+   */
+  public Command retractToHoldCommand() {
+    return Commands.runOnce(this::setIntakeHold, this).withName("Intake.RetractToHold");
   }
 
   private void setIntakeHold() {

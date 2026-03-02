@@ -77,8 +77,8 @@ public class DriverControls {
 
       controller.leftBumper()
           .whileTrue(superstructure.setIntakeDeployAndRoll().withName("OperatorControls.intakeDeployed"));
+      controller.leftBumper().onFalse(superstructure.retractIntakeUpCommand());
 
-      
       controller.rightTrigger().whileTrue(
           superstructure.feedAllCommand()
               .finallyDo(() -> superstructure.stopFeedingAllCommand().schedule()));

@@ -239,6 +239,11 @@ public class Superstructure extends SubsystemBase {
     return intake.deployAndRollCommand().withName("Superstructure.setIntakeDeployAndRoll");
   }
 
+  /** Run when bumper released so pivot goes up for 5s (physical stop at top). */
+  public Command retractIntakeUpCommand() {
+    return intake.retractUpCommand().withName("Superstructure.retractIntakeUp");
+  }
+
   /**
    * Command to shoot - spins up shooter.
    */
