@@ -50,7 +50,7 @@ public class IntakeSubsystem extends SubsystemBase {
       .withTelemetry("IntakeRollerMotor", TelemetryVerbosity.HIGH)
       .withGearing(new MechanismGearing(GearBox.fromReductionStages(1)))
       .withMotorInverted(true)
-      .withIdleMode(MotorMode.COAST)
+      .withIdleMode(MotorMode.)
       .withStatorCurrentLimit(Amps.of(30));
 
   private SmartMotorController smc = new SparkWrapper(rollerSpark, DCMotor.getNEO(1), smcConfig);
@@ -135,7 +135,9 @@ public class IntakeSubsystem extends SubsystemBase {
         holdCurrentPivotPosition();
       }
       smc.setDutyCycle(INTAKE_SPEED);
-    }, this).finallyDo(() -> smc.setDutyCycle(0)).withName("Intake.DeployAndRoll");
+    }, this).finallyDo(() -> smc.setDutyCycle(0))
+    .beforeStarting(() -> startTime(0) = Double.NaN)
+    .withName("Intake.DeployAndRoll");
   }
 
   /**
@@ -161,7 +163,9 @@ public class IntakeSubsystem extends SubsystemBase {
         holdCurrentPivotPosition();
       }
       smc.setDutyCycle(-INTAKE_SPEED);
-    }, this).finallyDo(() -> smc.setDutyCycle(0)).withName("Intake.BackFeedAndRoll");
+    }, this).finallyDo(() -> smc.setDutyCycle(0))
+    .beforeStarting(() -> startTime(0) = Double.NaN)
+    .withName("Intake.BackFeedAndRoll");
   }
 
   private void setIntakeStow() {
