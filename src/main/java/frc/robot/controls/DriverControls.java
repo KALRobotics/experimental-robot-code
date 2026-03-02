@@ -35,26 +35,27 @@ public class DriverControls {
 
   public static void configure(int port, TankDriveSubsystem drivetrain, Superstructure superstructure) {
     CommandXboxController controller = new CommandXboxController(port);
+    CommandXboxController controller2 = new CommandXboxController(1);
 
     // Curvature drive: left stick Y = throttle, right stick X = turn rate
     // Quick-turn (turn in place) activates when throttle is near zero
     drivetrain.setDefaultCommand(
         drivetrain.curvatureDriveCommand(
             () -> {
-              double input = -controller.getLeftY();
+              double input = -controller.getLeftY() + controller2.getLeftY();
               if (Math.abs(input) < ControllerConstants.DEADBAND) {
                 return 0.0;
               }
               return input * 0.5;
             },
             () -> {
-              double input = -controller.getRightX();
+              double input = -controller.getRightX() + controller2.getRightX();
               if (Math.abs(input) < ControllerConstants.DEADBAND) {
                 return 0.0;
               }
               return input * 0.5;
             },
-            () -> Math.abs(controller.getLeftY()) < ControllerConstants.DEADBAND)
+            () -> Math.abs(controller.getLeftY()) < ControllerConstants.DEADBAND && controller2.getLeftY() < ControllerConstants.DEADBAND)
             .withName("Drive"));
 
     if (DriverStation.isTest()) {
