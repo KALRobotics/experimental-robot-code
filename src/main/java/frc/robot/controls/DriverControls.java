@@ -78,12 +78,14 @@ public class DriverControls {
           .whileTrue(superstructure.setIntakeDeployAndRoll().withName("OperatorControls.intakeDeployed"));
 
       
-      controller.y().onTrue(superstructure.shootCommand());
-      controller.x().whileTrue(superstructure.stopShootingCommand());
-
-      controller.a().whileTrue(
+      controller.rightTrigger().whileTrue(
           superstructure.feedAllCommand()
               .finallyDo(() -> superstructure.stopFeedingAllCommand().schedule()));
+
+
+      controller.y().onTrue(superstructure.shootCommand());
+      
+      controller.x().whileTrue(superstructure.stopShootingCommand());
 
       controller.b().whileTrue(
           superstructure.backFeedAllCommand()

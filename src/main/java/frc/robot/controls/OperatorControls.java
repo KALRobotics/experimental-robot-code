@@ -51,9 +51,9 @@ public class OperatorControls {
     // REAL CONTROLS
     controller.start().onTrue(superstructure.rezeroIntakePivotAndTurretCommand().ignoringDisable(true));
 
-    //controller.rightBumper().whileTrue(
-    //      superstructure.feedAllCommand()
-    //          .finallyDo(() -> superstructure.stopFeedingAllCommand().schedule()));
+    controller.rightTrigger().whileTrue(
+        superstructure.feedAllCommand()
+            .finallyDo(() -> superstructure.stopFeedingAllCommand().schedule()));
 
     controller.leftBumper()
         .whileTrue(superstructure.setIntakeDeployAndRoll().withName("OperatorControls.intakeDeployed"));
