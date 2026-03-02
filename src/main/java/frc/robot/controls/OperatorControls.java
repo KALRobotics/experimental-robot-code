@@ -51,7 +51,11 @@ public class OperatorControls {
     // REAL CONTROLS
     controller.start().onTrue(superstructure.rezeroIntakePivotAndTurretCommand().ignoringDisable(true));
 
-    controller.rightBumper()
+    //controller.rightBumper().whileTrue(
+    //      superstructure.feedAllCommand()
+    //          .finallyDo(() -> superstructure.stopFeedingAllCommand().schedule()));
+
+    controller.leftBumper()
         .whileTrue(superstructure.setIntakeDeployAndRoll().withName("OperatorControls.intakeDeployed"));
 
     controller.y().onTrue(superstructure.shootCommand());
@@ -69,7 +73,7 @@ public class OperatorControls {
     controller.povLeft().onTrue(superstructure.setTurretLeft().withName("OperatorControls.setTurretLeft"));
     controller.povRight().onTrue(superstructure.setTurretRight().withName("OperatorControls.setTurretRight"));
 
-    controller.leftBumper().toggleOnTrue(
+    controller.rightBumper().toggleOnTrue(
         new ShootOnTheMoveCommand(drivetrain, superstructure, () -> superstructure.getAimPoint())
             .ignoringDisable(true)
             .withName("OperatorControls.aimCommand"));

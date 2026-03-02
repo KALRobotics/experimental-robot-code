@@ -70,13 +70,24 @@ public class DriverControls {
     } else {
       // Teleop controls
       controller.start().onTrue(Commands.runOnce(drivetrain::zeroGyro));
-
-      controller.leftBumper().whileTrue(
+      controller.rightBumper().whileTrue(
           superstructure.feedAllCommand()
               .finallyDo(() -> superstructure.stopFeedingAllCommand().schedule()));
 
-      controller.rightBumper()
+      controller.leftBumper()
           .whileTrue(superstructure.setIntakeDeployAndRoll().withName("OperatorControls.intakeDeployed"));
+
+      
+      controller.y().onTrue(superstructure.shootCommand());
+      controller.x().whileTrue(superstructure.stopShootingCommand());
+
+      controller.a().whileTrue(
+          superstructure.feedAllCommand()
+              .finallyDo(() -> superstructure.stopFeedingAllCommand().schedule()));
+
+      controller.b().whileTrue(
+          superstructure.backFeedAllCommand()
+              .finallyDo(() -> superstructure.stopFeedingAllCommand().schedule())); 
     }
   }
 
