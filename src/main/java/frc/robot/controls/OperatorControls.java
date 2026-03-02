@@ -6,6 +6,21 @@ import frc.robot.subsystems.Superstructure;
 import frc.robot.subsystems.TankDriveSubsystem;
 import frc.robot.subsystems.TurretSubsystem;
 
+import edu.wpi.first.math.controller.SimpleMotorFeedforward;
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.math.system.plant.DCMotor;
+import static edu.wpi.first.units.Units.Amps;
+import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.DegreesPerSecond;
+import static edu.wpi.first.units.Units.DegreesPerSecondPerSecond;
+import static edu.wpi.first.units.Units.Radians;
+import static edu.wpi.first.units.Units.Second;
+import static edu.wpi.first.units.Units.Seconds;
+import static edu.wpi.first.units.Units.Volts;
+import edu.wpi.first.units.measure.Angle;
+
 public class OperatorControls {
   public static final boolean MACOS_WEIRD_CONTROLLER = true;
 
@@ -51,10 +66,10 @@ public class OperatorControls {
 
     // REAL CONTROLS
     controller.start().onTrue(superstructure.rezeroIntakePivotAndTurretCommand().ignoringDisable(true));
+    
+    controller.rightTrigger().whileTrue(superstructure.turret.addAngle(Degrees.of(0.1)));
 
-    controller.rightTrigger().whileTrue(superstructure.turret.addAngle(1));
-
-    controller.leftTrigger().whileTrue(superstructure.turret.addAngle(-1));
+    controller.leftTrigger().whileTrue(superstructure.turret.addAngle(Degrees.of(-0.1)));
 
     controller.leftBumper()
         .whileTrue(superstructure.setIntakeDeployAndRoll().withName("OperatorControls.intakeDeployed"));

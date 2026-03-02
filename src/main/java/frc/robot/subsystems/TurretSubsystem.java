@@ -61,7 +61,7 @@ public class TurretSubsystem extends SubsystemBase {
       .withStatorCurrentLimit(Amps.of(10))
       .withClosedLoopRampRate(Seconds.of(0.1))
       .withOpenLoopRampRate(Seconds.of(0.1));
-
+    
   private SmartMotorController smc = new SparkWrapper(spark, DCMotor.getNEO(1), smcConfig);
 
   private final PivotConfig turretConfig = new PivotConfig(smc)
@@ -78,7 +78,7 @@ public class TurretSubsystem extends SubsystemBase {
   }
 
   public Command addAngle(Angle angleAdd) {
-    return turret.setAngle(turret.angle + angleAdd);
+    return turret.setAngle(turret.getAngle().plus(angleAdd));
   }
 
   
